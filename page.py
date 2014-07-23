@@ -2,15 +2,23 @@
  
 import cgi
 import os, random
+import socket
 
+# get my IP address so we can put a valid URL in the meta-refresh...
+myip = [(s.connect(('8.8.8.8', 80)), s.getsockname()[0], s.close()) for s in [socket.socket(socket.AF_INET, socket.SOCK_DGRAM)]][0][1]
+
+# take advantage of being able to pass paramters...
 form = cgi.FieldStorage()
- 
+
+# this enables dynamically changing of the refresh duration 
+# which also allows letting the most recent image display a while longer...
 dur = form.getvalue('duration')
 if dur == None: dur = '10'
 tempdur = dur
 lastnew = form.getvalue('lastnew')
 
 # pick a random file from the display directory...
+#  ... a list of the most recent n images should be passed, too, so there are not a lot of recent repeats...
 files = os.listdir('images')
 files.sort()
 bg = files[random.randint(0,len(files)-1)]
@@ -22,8 +30,10 @@ else:
     if not(lastnew == files[-1]):
             bg = files[-1]
             lastnew = bg
+            # here is where we linger longer for the most recently taken composite...
             tempdur = 25
 
+# generate the HTML for the browser...
 print """Content-type: text/html
 
 
@@ -38,7 +48,7 @@ print '''<style>
 
   .with-bg-size
   {'''
-print '''    background-image: url('http://10.81.16.110:8000/images/{}');'''.format(bg)
+print '''    background-image: url('http://'''+myip+''':8000/images/{}');'''.format(bg)
 print '''    width: 100%;
     height: 100%;
     background-position: center;
